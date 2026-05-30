@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>VR-тур кафедры ПТиДМ v14 TRUE SPHERE 4096</title>
+<title>VR-тур кафедры ПТиДМ v15 BIG MARKERS</title>
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none}
 #viewer{position:fixed;inset:0;width:100vw;height:100vh;display:block;background:#000}
@@ -33,6 +33,7 @@ body.vr #ui{opacity:.30;transform:scale(.70);transform-origin:left top}body.vr #
 #calibPanel select,#calibPanel textarea{width:100%;margin:4px 0 8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;padding:7px}
 #calibPanel textarea{height:95px;font-family:Consolas,monospace;font-size:11px}
 #calibPanel .row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#calibTip{margin-top:8px;padding:8px;border-radius:10px;background:rgba(255,213,79,.12);font-size:12px;line-height:1.35}
 </style>
 </head>
 <body>
@@ -42,8 +43,8 @@ body.vr #ui{opacity:.30;transform:scale(.70);transform-origin:left top}body.vr #
 <div id="loading">Загрузка 4096×2048 панорамы...</div>
 
 <div id="ui">
-  <h1 id="sceneTitle">VR-тур кафедры ПТиДМ v14</h1>
-  <p id="sceneSubtitle">Настоящая сферическая WebGL-панорама 4096×2048. Метки — 3D-объекты на сфере. Наведите курсор и удерживайте ~1.2 сек.</p>
+  <h1 id="sceneTitle">VR-тур кафедры ПТиДМ v15</h1>
+  <p id="sceneSubtitle">Настоящая сферическая панорама 4096×2048. Метки увеличены. Для точной привязки используйте «Настройка меток».</p>
   <div id="buttons">
     <button class="red" id="vrBtn" onclick="toggleVR()">Режим очков</button>
     <button class="green" onclick="requestGyro()">Включить гироскоп</button>
@@ -59,7 +60,7 @@ body.vr #ui{opacity:.30;transform:scale(.70);transform-origin:left top}body.vr #
 </div>
 
 <div id="info"><div id="infoTitle">Добро пожаловать</div><div id="infoText">v14: настоящая 3D-сфера. Для телефона нужен HTTPS, например GitHub Pages.</div></div>
-<div id="debug">v14 TRUE SPHERE 4096. Требуется интернет для загрузки Three.js с CDN.</div>
+<div id="debug">v15 BIG MARKERS: увеличены метки и область выбора, добавлен режим точной привязки меток к узлам.</div>
 
 <div id="calibPanel">
   <h2>Настройка меток</h2>
@@ -73,7 +74,8 @@ body.vr #ui{opacity:.30;transform:scale(.70);transform-origin:left top}body.vr #
     <button class="green" onclick="exportHotspots()">Экспорт координат</button>
     <button class="red" onclick="toggleCalibration()">Закрыть</button>
   </div>
-  <p style="font-size:12px;line-height:1.35;opacity:.9">Поверните обзор так, чтобы узел был в центре курсора, выберите метку и нажмите «Поставить в центр взгляда». Координаты сохраняются в браузере.</p>
+  <p style="font-size:12px;line-height:1.35;opacity:.9">Поверните обзор так, чтобы конкретный узел машины был точно в центре курсора, выберите нужную метку и нажмите «Поставить в центр взгляда». Так метка будет привязана к узлу, а не просто висеть рядом.</p>
+  <div id="calibTip">Совет: сначала настройте метку «Вибробрус» на общей сцене асфальтоукладчика, затем перейдите в сцену вибробруса и расставьте внутренние метки по отдельным узлам.</div>
   <textarea id="calibExport" placeholder="JSON с координатами появится здесь"></textarea>
 </div>
 
@@ -88,7 +90,7 @@ let vr=false, gyro=false, dragging=false, sx=0, sy=0, startYaw=0, startPitch=0;
 let targetYaw=0, targetPitch=0, manualYaw=0, manualPitch=0;
 let targetQuat=new THREE.Quaternion(), viewQuat=new THREE.Quaternion(), rawQuat=new THREE.Quaternion(), baseQuat=null;
 let focused=null, focusStart=0, fired=false, verticalSign=1;
-const DWELL=1200, SMOOTH=0.16, SPHERE_R=500, HOTSPOT_R=18;
+const DWELL=1100, SMOOTH=0.16, SPHERE_R=500, HOTSPOT_R=17, MARKER_SCALE=1.35, LABEL_SCALE=1.25;
 const cursorProgress=document.getElementById('cursorProgress'), loading=document.getElementById('loading');
 init(); loadScene('plaza',false); animate();
 
@@ -114,11 +116,20 @@ function onResize(){const w=window.innerWidth,h=window.innerHeight;renderer.setS
 function loadScene(key,push=true){if(push&&key!==currentScene)historyStack.push(currentScene);currentScene=key;const s=SCENES[key];document.getElementById('sceneTitle').textContent=s.title;document.getElementById('sceneSubtitle').textContent=s.summary;setInfo(s.title,s.summary);loading.classList.remove('hidden');textureLoader.load(IMAGES[s.image],tex=>{tex.colorSpace=THREE.SRGBColorSpace;tex.generateMipmaps=false;tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;if(sphereMat.map)sphereMat.map.dispose();sphereMat.map=tex;sphereMat.needsUpdate=true;loading.classList.add('hidden');},undefined,err=>{loading.textContent='Ошибка загрузки панорамы';setInfo('Ошибка','Не удалось загрузить панораму. Проверьте подключение и память устройства.');console.error(err)});buildHotspots();fillCalibSelect();clearFocus();}
 function goBack(){const s=SCENES[currentScene];if(s.back){loadScene(s.back,false);return}const prev=historyStack.pop();if(prev)loadScene(prev,false);}
 function currentHotspots(){return SCENES[currentScene].hotspots.map(h=>{const o=overrides[currentScene]?.[h.id];return o?{...h,yaw:o.yaw,pitch:o.pitch}:h})}
-function buildHotspots(){while(hotspotGroup.children.length){const o=hotspotGroup.children.pop();disposeObj(o)}currentHotspots().forEach(h=>{const g=new THREE.Group();g.userData.hotspot=h;g.position.copy(yawPitchToVector(h.yaw,h.pitch,HOTSPOT_R));g.lookAt(0,0,0);g.add(createMarkerSprite(h));const label=createLabelSprite(h.label,h.color||'#2ea8ff');label.position.set(0,-0.22,0);g.add(label);hotspotGroup.add(g);});}
+function buildHotspots(){while(hotspotGroup.children.length){const o=hotspotGroup.children.pop();disposeObj(o)}currentHotspots().forEach(h=>{const g=new THREE.Group();g.userData.hotspot=h;g.position.copy(yawPitchToVector(h.yaw,h.pitch,HOTSPOT_R));g.lookAt(0,0,0);g.add(createHitSprite(h));g.add(createMarkerSprite(h));const label=createLabelSprite(h.label,h.color||'#2ea8ff');label.position.set(0,-0.32,0);g.add(label);hotspotGroup.add(g);});}
 function yawPitchToVector(yaw,pitch,r){const y=THREE.MathUtils.degToRad(yaw),p=THREE.MathUtils.degToRad(pitch);return new THREE.Vector3(r*Math.sin(y)*Math.cos(p),r*Math.sin(p),-r*Math.cos(y)*Math.cos(p));}
 function vectorToYawPitch(v){const n=v.clone().normalize();const yaw=THREE.MathUtils.radToDeg(Math.atan2(n.x,-n.z));const pitch=THREE.MathUtils.radToDeg(Math.asin(n.y));return {yaw:Math.round(yaw*10)/10,pitch:Math.round(pitch*10)/10};}
-function createMarkerSprite(h){const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');ctx.beginPath();ctx.arc(128,128,92,0,Math.PI*2);ctx.fillStyle=h.color||'#2ea8ff';ctx.fill();ctx.lineWidth=14;ctx.strokeStyle='#fff';ctx.stroke();ctx.beginPath();ctx.arc(128,128,110,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=8;ctx.stroke();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 112px Arial';ctx.fillText(h.type==='scene'?'↗':h.type==='back'?'←':'i',128,132);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(0.65,0.65,0.65);s.userData.hotspot=h;return s;}
-function createLabelSprite(text,color){const c=document.createElement('canvas');c.width=900;c.height=170;const ctx=c.getContext('2d');ctx.fillStyle='rgba(0,0,0,.72)';roundRect(ctx,10,24,880,105,26);ctx.fill();ctx.lineWidth=5;ctx.strokeStyle=color;ctx.stroke();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 48px Arial';ctx.fillText(text,450,78);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(2.15,0.42,1);return s;}
+function createHitSprite(h){
+ const c=document.createElement('canvas');c.width=256;c.height=256;
+ const ctx=c.getContext('2d');ctx.beginPath();ctx.arc(128,128,126,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.001)';ctx.fill();
+ const t=new THREE.CanvasTexture(c);
+ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,opacity:0.001,depthTest:false}));
+ s.scale.set(1.45,1.45,1.45);
+ s.userData.hotspot=h;
+ return s;
+}
+function createMarkerSprite(h){const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');ctx.beginPath();ctx.arc(128,128,104,0,Math.PI*2);ctx.fillStyle=h.color||'#2ea8ff';ctx.fill();ctx.lineWidth=14;ctx.strokeStyle='#fff';ctx.stroke();ctx.beginPath();ctx.arc(128,128,122,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=8;ctx.stroke();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 125px Arial';ctx.fillText(h.type==='scene'?'↗':h.type==='back'?'←':'i',128,134);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(0.65*MARKER_SCALE,0.65*MARKER_SCALE,0.65*MARKER_SCALE);s.userData.hotspot=h;return s;}
+function createLabelSprite(text,color){const c=document.createElement('canvas');c.width=900;c.height=170;const ctx=c.getContext('2d');ctx.fillStyle='rgba(0,0,0,.72)';roundRect(ctx,10,24,880,105,26);ctx.fill();ctx.lineWidth=5;ctx.strokeStyle=color;ctx.stroke();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 48px Arial';ctx.fillText(text,450,78);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(2.15*LABEL_SCALE,0.42*LABEL_SCALE,1);return s;}
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
 function disposeObj(o){o.traverse?.(ch=>{if(ch.material){if(ch.material.map)ch.material.map.dispose();ch.material.dispose()}if(ch.geometry)ch.geometry.dispose()})}
 
@@ -127,7 +138,7 @@ function animate(t){requestAnimationFrame(animate);updateGaze(t||performance.now
 function render(){const w=window.innerWidth,h=window.innerHeight;renderer.setScissorTest(false);renderer.clear();if(!vr){camera.aspect=w/h;camera.updateProjectionMatrix();updateCameraQuat(camera);renderer.setViewport(0,0,w,h);renderer.render(scene,camera);}else{leftCamera.aspect=(w/2)/h;rightCamera.aspect=(w/2)/h;leftCamera.updateProjectionMatrix();rightCamera.updateProjectionMatrix();updateCameraQuat(leftCamera);rightCamera.quaternion.copy(leftCamera.quaternion);renderer.setScissorTest(true);renderer.setViewport(0,0,w/2,h);renderer.setScissor(0,0,w/2,h);renderer.render(scene,leftCamera);renderer.setViewport(w/2,0,w/2,h);renderer.setScissor(w/2,0,w/2,h);renderer.render(scene,rightCamera);renderer.setScissorTest(false);}}
 
 function getActiveCam(){return vr?leftCamera:camera}
-function updateGaze(now){const cam=getActiveCam();raycaster.setFromCamera(new THREE.Vector2(0,0),cam);const hits=raycaster.intersectObjects(hotspotGroup.children,true);const hit=hits.find(x=>findRoot(x.object));if(!hit){clearFocus();return}const root=findRoot(hit.object);if(!root){clearFocus();return}if(!focused||focused.uuid!==root.uuid){focused=root;focusStart=now;fired=false}const p=Math.min(1,(now-focusStart)/1200);cursorProgress.style.setProperty('--p',Math.round(p*360)+'deg');hotspotGroup.children.forEach(g=>g.scale.set(1,1,1));root.scale.set(1.22,1.22,1.22);if(p>=1&&!fired){fired=true;activateHotspot(root.userData.hotspot);setTimeout(clearFocus,650)}}
+function updateGaze(now){const cam=getActiveCam();raycaster.setFromCamera(new THREE.Vector2(0,0),cam);const hits=raycaster.intersectObjects(hotspotGroup.children,true);const hit=hits.find(x=>findRoot(x.object));if(!hit){clearFocus();return}const root=findRoot(hit.object);if(!root){clearFocus();return}if(!focused||focused.uuid!==root.uuid){focused=root;focusStart=now;fired=false}const p=Math.min(1,(now-focusStart)/1200);cursorProgress.style.setProperty('--p',Math.round(p*360)+'deg');hotspotGroup.children.forEach(g=>g.scale.set(1,1,1));root.scale.set(1.34,1.34,1.34);if(p>=1&&!fired){fired=true;activateHotspot(root.userData.hotspot);setTimeout(clearFocus,650)}}
 function findRoot(obj){let c=obj;while(c){if(c.userData&&c.userData.hotspot)return c;c=c.parent}return null}
 function clearFocus(){focused=null;focusStart=0;fired=false;cursorProgress.style.setProperty('--p','0deg');hotspotGroup.children.forEach(g=>g.scale.set(1,1,1))}
 function activateHotspot(h){if(!h)return;if(h.type==='scene'){setInfo(h.title,h.text);speakText(h.title+'. '+h.text);loadScene(h.target,true);return}if(h.type==='back'){setInfo(h.title,h.text);speakText(h.title+'. '+h.text);goBack();return}setInfo(h.title,h.text);speakText(h.title+'. '+h.text);}
@@ -153,7 +164,7 @@ function loadOverrides(){try{return JSON.parse(localStorage.getItem('ptidmHotspo
 function saveOverrides(){localStorage.setItem('ptidmHotspotsV14',JSON.stringify(overrides))}
 function toggleCalibration(){document.getElementById('calibPanel').classList.toggle('active');fillCalibSelect()}
 function fillCalibSelect(){const sel=document.getElementById('calibSelect');if(!sel)return;sel.innerHTML='';currentHotspots().forEach(h=>{const o=document.createElement('option');o.value=h.id;o.textContent=h.label+' ('+h.id+')';sel.appendChild(o);});}
-function setSelectedHotspotHere(){const id=document.getElementById('calibSelect').value;if(!id)return;const dir=new THREE.Vector3(0,0,-1).applyQuaternion(getActiveCam().quaternion);const yp=vectorToYawPitch(dir);overrides[currentScene]=overrides[currentScene]||{};overrides[currentScene][id]=yp;saveOverrides();buildHotspots();fillCalibSelect();setInfo('Метка настроена','Метка '+id+' поставлена: yaw='+yp.yaw+', pitch='+yp.pitch+'.');}
+function setSelectedHotspotHere(){const id=document.getElementById('calibSelect').value;if(!id)return;const dir=new THREE.Vector3(0,0,-1).applyQuaternion(getActiveCam().quaternion);const yp=vectorToYawPitch(dir);overrides[currentScene]=overrides[currentScene]||{};overrides[currentScene][id]=yp;saveOverrides();buildHotspots();fillCalibSelect();setInfo('Метка настроена','Метка '+id+' поставлена точно в центр текущего взгляда: yaw='+yp.yaw+', pitch='+yp.pitch+'. После настройки всех меток нажмите «Экспорт координат».');}
 function resetSceneHotspots(){if(overrides[currentScene]){delete overrides[currentScene];saveOverrides();buildHotspots();fillCalibSelect();setInfo('Метки сброшены','Пользовательские координаты текущей сцены удалены.');}}
 function exportHotspots(){document.getElementById('calibExport').value=JSON.stringify(overrides,null,2)}
 </script>
