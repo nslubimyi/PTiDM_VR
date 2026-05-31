@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>VR-тур кафедры ПТиДМ v18 REAL VOICE AUDIO</title>
+<title>VR-тур кафедры ПТиДМ v19 BIG TARGETS MENU</title>
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none}
 #viewer{position:fixed;inset:0;width:100vw;height:100vh;display:block;background:#000}
@@ -12,7 +12,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:
 #cursor .dot{position:absolute;left:50%;top:50%;width:5px;height:5px;background:#ffd54f;border-radius:50%;transform:translate(-50%,-50%)}
 #cursor .progress{position:absolute;inset:0;border-radius:50%;background:conic-gradient(#ffd54f var(--p,0deg),transparent 0deg);-webkit-mask:radial-gradient(circle,transparent 49%,#000 52%);mask:radial-gradient(circle,transparent 49%,#000 52%)}
 #ui,#info,#debug,button,#calibPanel,select,textarea{touch-action:auto;pointer-events:auto}
-#ui{position:fixed;left:10px;top:10px;z-index:25;width:min(540px,calc(100vw - 20px));background:rgba(0,0,0,.68);padding:10px 12px;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.36);transition:opacity .2s}
+#ui{position:fixed;left:10px;top:10px;z-index:25;width:min(540px,calc(100vw - 20px));background:rgba(0,0,0,.68);padding:10px 12px;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.36);transition:opacity .2s,width .2s,padding .2s}#uiTop{display:flex;align-items:center;justify-content:space-between;gap:8px}#menuToggleBtn{flex:0 0 auto;white-space:nowrap;font-size:12px;padding:8px 10px}#ui.collapsed{width:auto;max-width:calc(100vw - 20px);padding:8px 10px}#ui.collapsed #sceneSubtitle,#ui.collapsed #buttons{display:none}#ui.collapsed h1{font-size:15px;margin:0}
 #ui h1{margin:0 0 5px;color:#ffd54f;font-size:17px;line-height:1.15}
 #ui p{margin:0;font-size:13px;line-height:1.35;opacity:.92}
 #buttons{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -23,7 +23,7 @@ button.green{background:#15803d}button.orange{background:#ea580c}button.purple{b
 #debug{position:fixed;right:10px;top:10px;z-index:26;max-width:400px;background:rgba(0,0,0,.58);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.35}
 #vrExitBtn{position:fixed;right:10px;bottom:10px;z-index:60;display:none;background:#b91c1c;border:0;border-radius:10px;padding:10px 12px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.4)}
 body.vr #vrExitBtn{display:block}
-body.vr #ui{opacity:.30;transform:scale(.70);transform-origin:left top}body.vr #info{opacity:.88;bottom:6px;font-size:12px;padding:8px 10px}body.vr #debug{display:none}
+body.vr #ui{opacity:.24;transform:scale(.70);transform-origin:left top}body.vr #info{opacity:.88;bottom:6px;font-size:12px;padding:8px 10px}body.vr #debug{display:none}
 #loading{position:fixed;left:50%;top:50%;z-index:80;transform:translate(-50%,-50%);background:rgba(0,0,0,.76);padding:10px 14px;border-radius:12px;font-size:14px}
 #loading.hidden{display:none}
 #calibPanel{position:fixed;right:10px;bottom:10px;z-index:70;width:min(430px,calc(100vw - 20px));max-height:72vh;overflow:auto;background:rgba(0,0,0,.84);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:10px;display:none}
@@ -43,8 +43,8 @@ body.vr #ui{opacity:.30;transform:scale(.70);transform-origin:left top}body.vr #
 <div id="loading">Загрузка 4096×2048 панорамы...</div>
 
 <div id="ui">
-  <h1 id="sceneTitle">VR-тур кафедры ПТиДМ v18</h1>
-  <p id="sceneSubtitle">Настоящая сферическая панорама 4096×2048. Метки закреплены, подписи увеличены, добавлена настоящая голосовая озвучка.</p>
+  <h1 id="sceneTitle">VR-тур кафедры ПТиДМ v19</h1>
+  <p id="sceneSubtitle">Настоящая сферическая панорама 4096×2048. Метки увеличены, текстовые подписи скрыты, добавлено сворачиваемое меню.</p>
   <div id="buttons">
     <button class="red" id="vrBtn" onclick="toggleVR()">Режим очков</button>
     <button class="green" onclick="requestGyro()">Включить гироскоп</button>
@@ -62,7 +62,7 @@ body.vr #ui{opacity:.30;transform:scale(.70);transform-origin:left top}body.vr #
 </div>
 
 <div id="info"><div id="infoTitle">Добро пожаловать</div><div id="infoText">v14: настоящая 3D-сфера. Для телефона нужен HTTPS, например GitHub Pages.</div></div>
-<div id="debug">v18 REAL VOICE AUDIO: добавлена настоящая голосовая озвучка MP3 для всех меток.</div>
+<div id="debug">v19 BIG TARGETS MENU: метки увеличены, подписи скрыты, меню можно свернуть.</div>
 
 <div id="calibPanel">
   <h2>Настройка меток</h2>
@@ -93,7 +93,7 @@ let vr=false, gyro=false, dragging=false, sx=0, sy=0, startYaw=0, startPitch=0;
 let targetYaw=0, targetPitch=0, manualYaw=0, manualPitch=0;
 let targetQuat=new THREE.Quaternion(), viewQuat=new THREE.Quaternion(), rawQuat=new THREE.Quaternion(), baseQuat=null;
 let focused=null, focusStart=0, fired=false, verticalSign=1;
-const DWELL=1100, SMOOTH=0.16, SPHERE_R=500, HOTSPOT_R=17, MARKER_SCALE=1.35, LABEL_SCALE=1.25;
+const DWELL=1000, SMOOTH=0.16, SPHERE_R=500, HOTSPOT_R=17, MARKER_SCALE=1.95, LABEL_SCALE=1.25;
 const cursorProgress=document.getElementById('cursorProgress'), loading=document.getElementById('loading');
 init(); loadScene('plaza',false); animate();
 
@@ -119,7 +119,7 @@ function onResize(){const w=window.innerWidth,h=window.innerHeight;renderer.setS
 function loadScene(key,push=true){if(push&&key!==currentScene)historyStack.push(currentScene);currentScene=key;const s=SCENES[key];document.getElementById('sceneTitle').textContent=s.title;document.getElementById('sceneSubtitle').textContent=s.summary;setInfo(s.title,s.summary);loading.classList.remove('hidden');textureLoader.load(IMAGES[s.image],tex=>{tex.colorSpace=THREE.SRGBColorSpace;tex.generateMipmaps=false;tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;if(sphereMat.map)sphereMat.map.dispose();sphereMat.map=tex;sphereMat.needsUpdate=true;loading.classList.add('hidden');},undefined,err=>{loading.textContent='Ошибка загрузки панорамы';setInfo('Ошибка','Не удалось загрузить панораму. Проверьте подключение и память устройства.');console.error(err)});buildHotspots();fillCalibSelect();clearFocus();}
 function goBack(){const s=SCENES[currentScene];if(s.back){loadScene(s.back,false);return}const prev=historyStack.pop();if(prev)loadScene(prev,false);}
 function currentHotspots(){return SCENES[currentScene].hotspots.map(h=>{const o=overrides[currentScene]?.[h.id];return o?{...h,yaw:o.yaw,pitch:o.pitch}:h})}
-function buildHotspots(){while(hotspotGroup.children.length){const o=hotspotGroup.children.pop();disposeObj(o)}currentHotspots().forEach(h=>{const g=new THREE.Group();g.userData.hotspot=h;g.position.copy(yawPitchToVector(h.yaw,h.pitch,HOTSPOT_R));g.lookAt(0,0,0);g.add(createHitSprite(h));g.add(createMarkerSprite(h));const label=createLabelSprite(h.label,h.color||'#2ea8ff');label.position.set(0,-0.42,0);g.add(label);hotspotGroup.add(g);});}
+function buildHotspots(){while(hotspotGroup.children.length){const o=hotspotGroup.children.pop();disposeObj(o)}currentHotspots().forEach(h=>{const g=new THREE.Group();g.userData.hotspot=h;g.position.copy(yawPitchToVector(h.yaw,h.pitch,HOTSPOT_R));g.lookAt(0,0,0);g.add(createHitSprite(h));g.add(createMarkerSprite(h));hotspotGroup.add(g);});}
 function yawPitchToVector(yaw,pitch,r){const y=THREE.MathUtils.degToRad(yaw),p=THREE.MathUtils.degToRad(pitch);return new THREE.Vector3(r*Math.sin(y)*Math.cos(p),r*Math.sin(p),-r*Math.cos(y)*Math.cos(p));}
 function vectorToYawPitch(v){const n=v.clone().normalize();const yaw=THREE.MathUtils.radToDeg(Math.atan2(n.x,-n.z));const pitch=THREE.MathUtils.radToDeg(Math.asin(n.y));return {yaw:Math.round(yaw*10)/10,pitch:Math.round(pitch*10)/10};}
 function createHitSprite(h){
@@ -127,11 +127,11 @@ function createHitSprite(h){
  const ctx=c.getContext('2d');ctx.beginPath();ctx.arc(128,128,126,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.001)';ctx.fill();
  const t=new THREE.CanvasTexture(c);
  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,opacity:0.001,depthTest:false}));
- s.scale.set(1.45,1.45,1.45);
+ s.scale.set(2.2,2.2,2.2);
  s.userData.hotspot=h;
  return s;
 }
-function createMarkerSprite(h){const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');ctx.beginPath();ctx.arc(128,128,104,0,Math.PI*2);ctx.fillStyle=h.color||'#2ea8ff';ctx.fill();ctx.lineWidth=14;ctx.strokeStyle='#fff';ctx.stroke();ctx.beginPath();ctx.arc(128,128,122,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=8;ctx.stroke();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 125px Arial';ctx.fillText(h.type==='scene'?'↗':h.type==='back'?'←':'i',128,134);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(0.65*MARKER_SCALE,0.65*MARKER_SCALE,0.65*MARKER_SCALE);s.userData.hotspot=h;return s;}
+function createMarkerSprite(h){const c=document.createElement('canvas');c.width=256;c.height=256;const ctx=c.getContext('2d');ctx.beginPath();ctx.arc(128,128,104,0,Math.PI*2);ctx.fillStyle=h.color||'#2ea8ff';ctx.fill();ctx.lineWidth=14;ctx.strokeStyle='#fff';ctx.stroke();ctx.beginPath();ctx.arc(128,128,122,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=8;ctx.stroke();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 125px Arial';ctx.fillText(h.type==='scene'?'↗':h.type==='back'?'←':'i',128,134);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(0.78*MARKER_SCALE,0.78*MARKER_SCALE,0.78*MARKER_SCALE);s.userData.hotspot=h;return s;}
 function createLabelSprite(text,color){const c=document.createElement('canvas');c.width=1100;c.height=220;const ctx=c.getContext('2d');ctx.fillStyle='rgba(0,0,0,.72)';roundRect(ctx,10,24,1080,145,30);ctx.fill();ctx.lineWidth=5;ctx.strokeStyle=color;ctx.stroke();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 64px Arial';ctx.fillText(text,550,98);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(3.0*LABEL_SCALE,0.62*LABEL_SCALE,1);return s;}
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
 function disposeObj(o){o.traverse?.(ch=>{if(ch.material){if(ch.material.map)ch.material.map.dispose();ch.material.dispose()}if(ch.geometry)ch.geometry.dispose()})}
@@ -192,8 +192,10 @@ function activateHotspot(h){
   playHotspotAudio(h, spoken);
 }
 function setInfo(t,x){document.getElementById('infoTitle').textContent=t;document.getElementById('infoText').textContent=x}
+function setMenuCollapsed(collapsed){const ui=document.getElementById('ui');ui.classList.toggle('collapsed',collapsed);document.getElementById('menuToggleBtn').textContent=ui.classList.contains('collapsed')?'Развернуть меню':'Свернуть меню';}
+function toggleMenu(){const ui=document.getElementById('ui');setMenuCollapsed(!ui.classList.contains('collapsed'));}
 
-function toggleVR(){vr=!vr;document.body.classList.toggle('vr',vr);document.getElementById('vrBtn').textContent=vr?'Обычный режим':'Режим очков';if(vr&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});if(vr&&screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});if(!vr&&document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});onResize();}
+function toggleVR(){vr=!vr;document.body.classList.toggle('vr',vr);document.getElementById('vrBtn').textContent=vr?'Обычный режим':'Режим очков';if(vr){setMenuCollapsed(true)}if(vr&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});if(vr&&screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});if(!vr&&document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});onResize();}
 function resetView(){targetYaw=0;targetPitch=0;manualYaw=0;manualPitch=0;gyro=false;baseQuat=null;targetQuat.identity();viewQuat.identity();setInfo('Обзор центрирован','Гироскоп отключён и базовое положение сброшено.');}
 async function requestGyro(){if(location.protocol!=='https:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){setInfo('Нужен HTTPS','Для гироскопа на телефоне нужна HTTPS-ссылка GitHub Pages.');return}try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const p=await DeviceOrientationEvent.requestPermission();if(p!=='granted'){setInfo('Гироскоп не разрешён','Разрешение на датчики не выдано.');return}}baseQuat=null;viewQuat.identity();targetQuat.identity();window.addEventListener('deviceorientation',onOrientation,true);gyro=true;setInfo('Гироскоп включён','Текущее положение телефона принято за центр.');}catch(e){setInfo('Гироскоп недоступен','Браузер не разрешил доступ к датчикам.');}}
 function onOrientation(e){if(!gyro||e.alpha===null||e.beta===null||e.gamma===null)return;const q=deviceQuat(e.alpha,e.beta,e.gamma,(screen.orientation&&screen.orientation.angle)||window.orientation||0);if(!baseQuat){baseQuat=q.clone().invert();viewQuat.identity()}targetQuat.copy(baseQuat).multiply(q);}
