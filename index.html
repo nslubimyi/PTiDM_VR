@@ -3,16 +3,26 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>VR-тур кафедры ПТиДМ v19 BIG TARGETS MENU</title>
+<title>VR-тур кафедры ПТиДМ v20 GAZE FIX</title>
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none}
 #viewer{position:fixed;inset:0;width:100vw;height:100vh;display:block;background:#000}
 #cursor{position:fixed;left:50%;top:50%;z-index:30;width:36px;height:36px;transform:translate(-50%,-50%);pointer-events:none}
 #cursor .ring{position:absolute;inset:5px;border:3px solid rgba(255,255,255,.9);border-radius:50%;box-shadow:0 0 8px #000}
+#vrCursors{display:none}
+body.vr #cursor{display:none}
+body.vr #vrCursors{display:block}
+.vrCursor{position:fixed;top:50%;z-index:31;width:42px;height:42px;transform:translate(-50%,-50%);pointer-events:none}
+.vrCursor.left{left:25%}
+.vrCursor.right{left:75%}
+.vrCursor .ring{position:absolute;inset:5px;border:3px solid rgba(255,255,255,.95);border-radius:50%;box-shadow:0 0 8px #000}
+.vrCursor .dot{position:absolute;left:50%;top:50%;width:6px;height:6px;background:#ffd54f;border-radius:50%;transform:translate(-50%,-50%)}
+#menuFab{position:fixed;left:10px;top:10px;z-index:90;display:none;background:#1565c0;color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+body.menu-collapsed #menuFab{display:block}
 #cursor .dot{position:absolute;left:50%;top:50%;width:5px;height:5px;background:#ffd54f;border-radius:50%;transform:translate(-50%,-50%)}
 #cursor .progress{position:absolute;inset:0;border-radius:50%;background:conic-gradient(#ffd54f var(--p,0deg),transparent 0deg);-webkit-mask:radial-gradient(circle,transparent 49%,#000 52%);mask:radial-gradient(circle,transparent 49%,#000 52%)}
 #ui,#info,#debug,button,#calibPanel,select,textarea{touch-action:auto;pointer-events:auto}
-#ui{position:fixed;left:10px;top:10px;z-index:25;width:min(540px,calc(100vw - 20px));background:rgba(0,0,0,.68);padding:10px 12px;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.36);transition:opacity .2s,width .2s,padding .2s}#uiTop{display:flex;align-items:center;justify-content:space-between;gap:8px}#menuToggleBtn{flex:0 0 auto;white-space:nowrap;font-size:12px;padding:8px 10px}#ui.collapsed{width:auto;max-width:calc(100vw - 20px);padding:8px 10px}#ui.collapsed #sceneSubtitle,#ui.collapsed #buttons{display:none}#ui.collapsed h1{font-size:15px;margin:0}
+#ui{position:fixed;left:10px;top:10px;z-index:25;width:min(540px,calc(100vw - 20px));background:rgba(0,0,0,.68);padding:10px 12px;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.36);transition:opacity .2s,width .2s,padding .2s}#uiTop{display:flex;align-items:center;justify-content:space-between;gap:8px}#menuToggleBtn{flex:0 0 auto;white-space:nowrap;font-size:12px;padding:8px 10px}#ui.collapsed{display:none}#ui.collapsed #sceneSubtitle,#ui.collapsed #buttons{display:none}#ui.collapsed h1{font-size:15px;margin:0}
 #ui h1{margin:0 0 5px;color:#ffd54f;font-size:17px;line-height:1.15}
 #ui p{margin:0;font-size:13px;line-height:1.35;opacity:.92}
 #buttons{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -39,12 +49,17 @@ body.vr #ui{opacity:.24;transform:scale(.70);transform-origin:left top}body.vr #
 <body>
 <canvas id="viewer"></canvas>
 <div id="cursor"><div class="progress" id="cursorProgress"></div><div class="ring"></div><div class="dot"></div></div>
+<div id="vrCursors">
+  <div class="vrCursor left"><div class="progress" id="cursorProgressLeft"></div><div class="ring"></div><div class="dot"></div></div>
+  <div class="vrCursor right"><div class="progress" id="cursorProgressRight"></div><div class="ring"></div><div class="dot"></div></div>
+</div>
+<button id="menuFab" onclick="setMenuCollapsed(false)">Меню</button>
 <button id="vrExitBtn" onclick="toggleVR()">Выйти из VR</button>
 <div id="loading">Загрузка 4096×2048 панорамы...</div>
 
 <div id="ui">
-  <h1 id="sceneTitle">VR-тур кафедры ПТиДМ v19</h1>
-  <p id="sceneSubtitle">Настоящая сферическая панорама 4096×2048. Метки увеличены, текстовые подписи скрыты, добавлено сворачиваемое меню.</p>
+  <h1 id="sceneTitle">VR-тур кафедры ПТиДМ v20</h1>
+  <p id="sceneSubtitle">Настоящая сферическая панорама 4096×2048. Метки увеличены, подписи скрыты, исправлено наведение в VR.</p>
   <div id="buttons">
     <button class="red" id="vrBtn" onclick="toggleVR()">Режим очков</button>
     <button class="green" onclick="requestGyro()">Включить гироскоп</button>
@@ -62,7 +77,7 @@ body.vr #ui{opacity:.24;transform:scale(.70);transform-origin:left top}body.vr #
 </div>
 
 <div id="info"><div id="infoTitle">Добро пожаловать</div><div id="infoText">v14: настоящая 3D-сфера. Для телефона нужен HTTPS, например GitHub Pages.</div></div>
-<div id="debug">v19 BIG TARGETS MENU: метки увеличены, подписи скрыты, меню можно свернуть.</div>
+<div id="debug">v20 GAZE FIX: исправлено наведение на метки в VR, добавлены прицелы для каждого глаза и отдельная кнопка меню.</div>
 
 <div id="calibPanel">
   <h2>Настройка меток</h2>
@@ -94,7 +109,8 @@ let targetYaw=0, targetPitch=0, manualYaw=0, manualPitch=0;
 let targetQuat=new THREE.Quaternion(), viewQuat=new THREE.Quaternion(), rawQuat=new THREE.Quaternion(), baseQuat=null;
 let focused=null, focusStart=0, fired=false, verticalSign=1;
 const DWELL=1000, SMOOTH=0.16, SPHERE_R=500, HOTSPOT_R=17, MARKER_SCALE=1.95, LABEL_SCALE=1.25;
-const cursorProgress=document.getElementById('cursorProgress'), loading=document.getElementById('loading');
+const cursorProgress=document.getElementById('cursorProgress'), cursorProgressLeft=document.getElementById('cursorProgressLeft'), cursorProgressRight=document.getElementById('cursorProgressRight'), loading=document.getElementById('loading');
+function setCursorProgress(deg){cursorProgress.style.setProperty('--p',deg);cursorProgressLeft.style.setProperty('--p',deg);cursorProgressRight.style.setProperty('--p',deg);}
 init(); loadScene('plaza',false); animate();
 
 function init(){
@@ -141,9 +157,13 @@ function animate(t){requestAnimationFrame(animate);updateGaze(t||performance.now
 function render(){const w=window.innerWidth,h=window.innerHeight;renderer.setScissorTest(false);renderer.clear();if(!vr){camera.aspect=w/h;camera.updateProjectionMatrix();updateCameraQuat(camera);renderer.setViewport(0,0,w,h);renderer.render(scene,camera);}else{leftCamera.aspect=(w/2)/h;rightCamera.aspect=(w/2)/h;leftCamera.updateProjectionMatrix();rightCamera.updateProjectionMatrix();updateCameraQuat(leftCamera);rightCamera.quaternion.copy(leftCamera.quaternion);renderer.setScissorTest(true);renderer.setViewport(0,0,w/2,h);renderer.setScissor(0,0,w/2,h);renderer.render(scene,leftCamera);renderer.setViewport(w/2,0,w/2,h);renderer.setScissor(w/2,0,w/2,h);renderer.render(scene,rightCamera);renderer.setScissorTest(false);}}
 
 function getActiveCam(){return vr?leftCamera:camera}
-function updateGaze(now){const cam=getActiveCam();raycaster.setFromCamera(new THREE.Vector2(0,0),cam);const hits=raycaster.intersectObjects(hotspotGroup.children,true);const hit=hits.find(x=>findRoot(x.object));if(!hit){clearFocus();return}const root=findRoot(hit.object);if(!root){clearFocus();return}if(!focused||focused.uuid!==root.uuid){focused=root;focusStart=now;fired=false}const p=Math.min(1,(now-focusStart)/1200);cursorProgress.style.setProperty('--p',Math.round(p*360)+'deg');hotspotGroup.children.forEach(g=>g.scale.set(1,1,1));root.scale.set(1.34,1.34,1.34);if(p>=1&&!fired){fired=true;activateHotspot(root.userData.hotspot);setTimeout(clearFocus,650)}}
-function findRoot(obj){let c=obj;while(c){if(c.userData&&c.userData.hotspot)return c;c=c.parent}return null}
-function clearFocus(){focused=null;focusStart=0;fired=false;cursorProgress.style.setProperty('--p','0deg');hotspotGroup.children.forEach(g=>g.scale.set(1,1,1))}
+function updateGaze(now){const cam=getActiveCam();raycaster.setFromCamera(new THREE.Vector2(0,0),cam);const hits=raycaster.intersectObjects(hotspotGroup.children,true);const hit=hits.find(x=>findRoot(x.object));if(!hit){clearFocus();return}const root=findRoot(hit.object);if(!root){clearFocus();return}if(!focused||focused.uuid!==root.uuid){focused=root;focusStart=now;fired=false}const p=Math.min(1,(now-focusStart)/DWELL);setCursorProgress(Math.round(p*360)+'deg');hotspotGroup.children.forEach(g=>g.scale.set(1,1,1));root.scale.set(1.55,1.55,1.55);if(p>=1&&!fired){fired=true;activateHotspot(root.userData.hotspot);setTimeout(clearFocus,650)}}
+function findRoot(obj){
+  let c=obj;
+  while(c && c.parent !== hotspotGroup){c=c.parent}
+  return (c && c.userData && c.userData.hotspot) ? c : null;
+}
+function clearFocus(){focused=null;focusStart=0;fired=false;setCursorProgress('0deg');hotspotGroup.children.forEach(g=>g.scale.set(1,1,1))}
 const audioPlayer = new Audio();
 audioPlayer.preload = 'auto';
 let audioUnlocked = false;
@@ -192,7 +212,7 @@ function activateHotspot(h){
   playHotspotAudio(h, spoken);
 }
 function setInfo(t,x){document.getElementById('infoTitle').textContent=t;document.getElementById('infoText').textContent=x}
-function setMenuCollapsed(collapsed){const ui=document.getElementById('ui');ui.classList.toggle('collapsed',collapsed);document.getElementById('menuToggleBtn').textContent=ui.classList.contains('collapsed')?'Развернуть меню':'Свернуть меню';}
+function setMenuCollapsed(collapsed){const ui=document.getElementById('ui');ui.classList.toggle('collapsed',collapsed);document.body.classList.toggle('menu-collapsed',collapsed);document.getElementById('menuToggleBtn').textContent=ui.classList.contains('collapsed')?'Развернуть меню':'Свернуть';}
 function toggleMenu(){const ui=document.getElementById('ui');setMenuCollapsed(!ui.classList.contains('collapsed'));}
 
 function toggleVR(){vr=!vr;document.body.classList.toggle('vr',vr);document.getElementById('vrBtn').textContent=vr?'Обычный режим':'Режим очков';if(vr){setMenuCollapsed(true)}if(vr&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});if(vr&&screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});if(!vr&&document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});onResize();}
