@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>VR-курс ПТиДМ v28 Quiz Hotspots</title>
+<title>VR-курс ПТиДМ v29 Quiz Fix</title>
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none}
 #viewer{position:fixed;inset:0;width:100vw;height:100vh;display:block;background:#000}
@@ -97,7 +97,7 @@ body.vr #quizHud{display:none !important}
 
 
 <div id="ui">
-  <h1 id="sceneTitle">VR-курс ПТиДМ v28</h1>
+  <h1 id="sceneTitle">VR-курс ПТиДМ v29</h1>
   <p id="sceneSubtitle">Учебный VR-блок по VÖGELE SUPER 1600-3: стартовая площадь, обзор машины, технологическая цепочка и общая компоновка.</p>
   <div id="buttons">
     <button class="red" id="vrBtn" onclick="toggleVR()">Режим очков</button>
@@ -117,7 +117,7 @@ body.vr #quizHud{display:none !important}
 </div>
 
 <div id="info"><div id="infoTitle">Добро пожаловать</div><div id="infoText">v14: настоящая 3D-сфера. Для телефона нужен HTTPS, например GitHub Pages.</div></div>
-<div id="debug">v28 Quiz Hotspots: исправлены координаты меток теста и запуск итоговой озвучки результата.</div>
+<div id="debug">v29 Quiz Fix: исправлена координата метки ответа А в третьем вопросе теста.</div>
 
 <div id="calibPanel">
   <h2>Настройка меток</h2>
@@ -167,7 +167,7 @@ const QUIZ_COORDS = [
   },
   {
     answers: [
-      {yaw:-7.1,pitch:-4.1},
+      {yaw:-37.1,pitch:-9.8},
       {yaw:-78.0,pitch:6.7},
       {yaw:-69.0,pitch:33.4}
     ],
@@ -527,8 +527,8 @@ function touchMove(e){if(isUiTarget(e.target))return;if(vr&&gyro)return;if(!drag
 
 function speakCurrent(){const s=SCENES[currentScene];speakText(s.title+'. '+s.summary)}
 function speakText(text){if(!('speechSynthesis'in window)){setInfo('Озвучивание недоступно','Этот браузер не поддерживает системное озвучивание.');return}try{audioPlayer.pause();audioPlayer.currentTime=0;}catch(e){}window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ru-RU';u.rate=.95;u.pitch=1;window.speechSynthesis.speak(u);}
-function loadOverrides(){try{return JSON.parse(localStorage.getItem('ptidmBlock1HotspotsV28')||'{}')}catch(e){return {}}}
-function saveOverrides(){localStorage.setItem('ptidmBlock1HotspotsV28',JSON.stringify(overrides))}
+function loadOverrides(){try{return JSON.parse(localStorage.getItem('ptidmBlock1HotspotsV29')||'{}')}catch(e){return {}}}
+function saveOverrides(){localStorage.setItem('ptidmBlock1HotspotsV29',JSON.stringify(overrides))}
 function toggleCalibration(){document.getElementById('calibPanel').classList.toggle('active');fillCalibSelect()}
 function fillCalibSelect(){const sel=document.getElementById('calibSelect');if(!sel)return;sel.innerHTML='';currentHotspots().forEach(h=>{const o=document.createElement('option');o.value=h.id;o.textContent=h.label+' ('+h.id+')';sel.appendChild(o);});}
 function setSelectedHotspotHere(){const id=document.getElementById('calibSelect').value;if(!id)return;const dir=new THREE.Vector3(0,0,-1).applyQuaternion(getActiveCam().quaternion);const yp=vectorToYawPitch(dir);overrides[currentScene]=overrides[currentScene]||{};overrides[currentScene][id]=yp;saveOverrides();buildHotspots();fillCalibSelect();setInfo('Метка настроена','Метка '+id+' поставлена точно в центр текущего взгляда: yaw='+yp.yaw+', pitch='+yp.pitch+'. После настройки всех меток нажмите «Экспорт координат».');}
